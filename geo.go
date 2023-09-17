@@ -49,9 +49,13 @@ type Result struct {
 	timeTaken float64
 }
 
-func (g *Geo) ImportCSV(path string, concurrency int) (*Result, error) {
+func (g *Geo) ImportCSV(path string, concurrency uint) (*Result, error) {
 	if filepath.Ext(path) != ".csv" {
 		return nil, errors.New("invalid file extension")
+	}
+
+	if concurrency == 0 {
+		concurrency = 1
 	}
 
 	start := time.Now()
@@ -60,7 +64,7 @@ func (g *Geo) ImportCSV(path string, concurrency int) (*Result, error) {
 	signal := make(chan bool)
 	importer := csvImporter{
 		path:        path,
-		concurrency: concurrency,
+		concurrency: int(concurrency),
 		driver:      g.driver,
 		db:          g.db,
 		data:        data,
