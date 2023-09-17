@@ -39,7 +39,7 @@ func (r *locationRepository) GetLocationByIP(ip string) (*Location, error) {
 	err := r.db.QueryRow("SELECT * FROM locations WHERE ip_address = ?", ip).Scan(&location.ID,
 		&location.IPAddress, &location.CountryCode, &location.Country, &location.City, &location.Lat,
 		&location.Lng, &location.MysteryValue, &location.CreatedAt, &location.UpdatedAt)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 
