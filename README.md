@@ -67,12 +67,6 @@ func main() {
 		DB:          "database",
 		User:        "user",
 		Password:    "password",
-		Location:    nil,
-		MaxConn:     0,
-		IdleConn:    0,
-		Timeout:     0,
-		DialRetry:   0,
-		DialTimeout: 0,
 	}
 
 	geo, err := geoolocation.New(d)
@@ -107,12 +101,6 @@ func main() {
 		DB:          "database",
 		User:        "user",
 		Password:    "password",
-		Location:    nil,
-		MaxConn:     0,
-		IdleConn:    0,
-		Timeout:     0,
-		DialRetry:   0,
-		DialTimeout: 0,
 	}
 
 	geo, err := geoolocation.New(d)
@@ -153,12 +141,6 @@ func main() {
 		DB:          "database",
 		User:        "user",
 		Password:    "password",
-		Location:    nil,
-		MaxConn:     0,
-		IdleConn:    0,
-		Timeout:     0,
-		DialRetry:   0,
-		DialTimeout: 0,
 	}
 
 	geo, err := geoolocation.New(d)
