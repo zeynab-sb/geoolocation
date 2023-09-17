@@ -41,6 +41,12 @@ type Location struct {
 	CreatedAt    time.Time `db:"created_at"`
 }
 ```
+If you want to prevent duplicate row this constraint should be added. It will be added in CreateSchema.
+
+```sql
+    CONSTRAINT uc_location UNIQUE (ip_address,country_code,country,city,latitude,longitude,mystery_value)
+
+```
 
 Building Schema
 
