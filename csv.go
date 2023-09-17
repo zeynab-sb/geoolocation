@@ -18,15 +18,25 @@ import (
 )
 
 type csvImporter struct {
-	path          string
+	// Address of the file to be imported
+	path string
+
+	// Address of the sanitized file
 	sanitizedPath string
-	concurrency   int
-	driver        database.Driver
-	db            *sql.DB
-	data          chan csvData
-	signal        chan bool
+
+	// Number of concurrent processes
+	concurrency int
+	driver      database.Driver
+	db          *sql.DB
+
+	// The reader sends each row of CSV on this channel, and the sanitizers receive data from this channel.
+	data chan csvData
+
+	// The sanitizer sends a signal on this channel when its work is done, and the load will start loading by receiving this signal.
+	signal chan bool
 }
 
+// csvHeader contains valid headers
 var csvHeader []string
 
 // countryCodeRegex contains code pattern that is two capital letter .
@@ -39,6 +49,9 @@ func init() {
 	sqlPatternRegex = regexp.MustCompile(`(?i)\b(?:SELECT|INSERT|UPDATE|DELETE|UNION|OR|DROP|EXEC(UTE)?|ALTER|CREATE|TRUNCATE)\b`)
 }
 
+// setUpSanitizer creates the sanitized file and sets up go routines to listen on channel data,
+// sanitize each row, and then write it to the file async. At the end of this process it sends signal
+// for loading.
 func (i *csvImporter) setUpSanitizer() error {
 	i.sanitizedPath = fmt.Sprintf("%s_sanitized.csv", strings.TrimSuffix(filepath.Base(i.path), ".csv"))
 	sanitizedFile, err := os.Create(i.sanitizedPath)
@@ -82,6 +95,8 @@ func (i *csvImporter) setUpSanitizer() error {
 	return nil
 }
 
+// read gets each row of CSV and sends it to the data channel. If any issue happens here, it closes
+//the data channel, and the go routines in sanitizer will close.
 func (i *csvImporter) read() (int64, error) {
 	defer close(i.data)
 
@@ -136,12 +151,14 @@ func (i *csvImporter) read() (int64, error) {
 	return totalRows, nil
 }
 
+// load import the sanitized file to the database based on the driver.
 func (i *csvImporter) load() (int64, error) {
 	<-i.signal
 
 	return i.driver.Load(i.sanitizedPath)
 }
 
+// clean removes the sanitized file.
 func (i *csvImporter) clean() {
 	err := os.Remove(i.sanitizedPath)
 	if err != nil {
@@ -159,6 +176,7 @@ type csvData struct {
 	mysteryValue string
 }
 
+// sanitize validate all the fields of CSV data and normalizes the names.
 func (d *csvData) sanitize() error {
 	if net.ParseIP(d.ipAddress) == nil {
 		return errors.New("invalid ip")

@@ -49,11 +49,17 @@ type Result struct {
 	timeTaken float64
 }
 
+// ImportCSV function, give path and the number of concurrent  processes.
+// If you have just one hardware thread, don't send this param more than
+// one because the process that is in the concurrent part is CPU bound,
+// and it just increases the result time.
 func (g *Geo) ImportCSV(path string, concurrency uint) (*Result, error) {
 	if filepath.Ext(path) != ".csv" {
 		return nil, errors.New("invalid file extension")
 	}
 
+	// If concurrency sent 0 it will set to because we need at least one
+	//go routine to sanitize.
 	if concurrency == 0 {
 		concurrency = 1
 	}
@@ -96,6 +102,7 @@ func (g *Geo) ImportCSV(path string, concurrency uint) (*Result, error) {
 	}, nil
 }
 
+// CreateSchema create locations table based on the driver
 func (g *Geo) CreateSchema() error {
 	return g.driver.CreateSchema()
 }

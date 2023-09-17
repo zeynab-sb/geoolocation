@@ -27,7 +27,7 @@ type DBConfig struct {
 	DialTimeout time.Duration  `yaml:"dial_timeout"`
 }
 
-// New ...
+// New returns DB struct
 func (d *DBConfig) New() (*sql.DB, error) {
 	switch d.Driver {
 	case "mysql":

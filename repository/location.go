@@ -34,6 +34,7 @@ func NewLocationRepository(db *sql.DB) LocationRepository {
 	return repo
 }
 
+// GetLocationByIP retrieve location info by ip.
 func (r *locationRepository) GetLocationByIP(ip string) (*Location, error) {
 	var location Location
 	err := r.db.QueryRow("SELECT * FROM locations WHERE ip_address = ?", ip).Scan(&location.ID,
