@@ -5,8 +5,8 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
+	"github.com/zeynab-sb/geoolocation/database"
 	"io"
 	"net"
 	"os"
@@ -21,7 +21,7 @@ type csvImporter struct {
 	path          string
 	sanitizedPath string
 	concurrency   int
-	driver        string
+	driver        database.Driver
 	db            *sql.DB
 	data          chan csvData
 	signal        chan bool
@@ -139,26 +139,7 @@ func (i *csvImporter) read() (int64, error) {
 func (i *csvImporter) load() (int64, error) {
 	<-i.signal
 
-	switch i.driver {
-	case "mysql":
-		mysql.RegisterLocalFile(i.sanitizedPath)
-		r, err := i.db.Exec("LOAD DATA LOCAL INFILE '" + i.sanitizedPath + "' INTO TABLE locations FIELDS TERMINATED BY \",\" LINES TERMINATED BY \"\\n\" (ip_address,country_code,country,city,latitude,longitude,mystery_value);")
-		if err != nil {
-			return 0, err
-		}
-
-		insertedRows, err := r.RowsAffected()
-		if err != nil {
-			return 0, err
-		}
-
-		return insertedRows, nil
-	//TODO: add load command with postgres
-	case "postgres":
-		return 0, nil
-	default:
-		return 0, errors.New("invalid database driver")
-	}
+	return i.driver.Load(i.sanitizedPath)
 }
 
 func (i *csvImporter) clean() {

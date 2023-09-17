@@ -7,6 +7,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	"github.com/zeynab-sb/geoolocation/database"
 	"log"
 	"os"
 	"testing"
@@ -35,7 +36,7 @@ func (suite *GeoTestSuite) SetupSuite() {
 	suite.patch = gomonkey.NewPatches()
 	suite.geo = Geo{
 		db:         mockDB,
-		driver:     "mysql",
+		driver:     &database.MySQLDriver{DB: mockDB},
 		Repository: nil,
 	}
 }

@@ -14,7 +14,7 @@ type Geo struct {
 	db *sql.DB
 
 	// It can be either mysql or postgres
-	driver string
+	driver database.Driver
 
 	// Access to model layer
 	Repository repository.LocationRepository
@@ -27,9 +27,14 @@ func New(config *database.DBConfig) (*Geo, error) {
 		return nil, err
 	}
 
+	driver, err := database.New(config.Driver, db)
+	if err != nil {
+		return nil, err
+	}
+
 	repo := repository.NewLocationRepository(db)
 
-	return &Geo{db: db, driver: config.Driver, Repository: repo}, nil
+	return &Geo{db: db, driver: driver, Repository: repo}, nil
 }
 
 // Result is returned in ImportCSV
@@ -85,4 +90,8 @@ func (g *Geo) ImportCSV(path string, concurrency int) (*Result, error) {
 		discardedRows: totalRows - insertedRows,
 		timeTaken:     finished.Sub(start).Seconds(),
 	}, nil
+}
+
+func (g *Geo) CreateSchema() error {
+	return g.driver.CreateSchema()
 }

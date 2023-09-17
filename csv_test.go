@@ -10,6 +10,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"github.com/zeynab-sb/geoolocation/database"
 	"log"
 	"os"
 	"sync"
@@ -67,7 +68,7 @@ func (suite *CSVTestSuite) newImporter(path string, concurrency int) *csvImporte
 	return &csvImporter{
 		path:        path,
 		concurrency: concurrency,
-		driver:      "mysql",
+		driver:      &database.MySQLDriver{DB: suite.db},
 		db:          suite.db,
 		data:        data,
 		signal:      signal,
@@ -296,22 +297,6 @@ func (suite *CSVTestSuite) TestCSV_read_Success() {
 
 	err = deleteCSV("data4.csv")
 	require.NoError(err)
-}
-
-func (suite *CSVTestSuite) TestCSV_load_InvalidDriver_Failure() {
-	require := suite.Require()
-	expectedError := "invalid database driver"
-
-	i := suite.newImporter("data5.csv", 1)
-	i.sanitizedPath = "data5.csv"
-	i.driver = "test"
-
-	go func() {
-		i.signal <- true
-	}()
-
-	_, err := i.load()
-	require.EqualError(err, expectedError)
 }
 
 func (suite *CSVTestSuite) TestCSV_load_MySQL_DatabaseErr_Failure() {

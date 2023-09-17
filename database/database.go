@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"net/url"
 	"time"
 
@@ -15,7 +16,7 @@ type DBConfig struct {
 	Driver      string         `yaml:"driver"`
 	Host        string         `yaml:"host"`
 	Port        int            `yaml:"port"`
-	DB          string         `yaml:"db"`
+	DB          string         `yaml:"DB"`
 	User        string         `yaml:"user"`
 	Password    string         `yaml:"password"`
 	Location    *time.Location `yaml:"location"`
@@ -24,7 +25,6 @@ type DBConfig struct {
 	Timeout     time.Duration  `yaml:"timeout"`
 	DialRetry   int            `yaml:"dial_retry"`
 	DialTimeout time.Duration  `yaml:"dial_timeout"`
-	//Logger      DatabaseLogger `yaml:"logger"`
 }
 
 // New ...
@@ -132,4 +132,61 @@ func (d *DBConfig) mysqlDSN() string {
 
 func (d *DBConfig) postgresqlDSN() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", d.User, url.QueryEscape(d.Password), d.Host, d.Port, d.DB)
+}
+
+type Driver interface {
+	Load(path string) (int64, error)
+	CreateSchema() error
+}
+
+func New(driver string, db *sql.DB) (Driver, error) {
+	switch driver {
+	case "mysql":
+		return &MySQLDriver{DB: db}, nil
+	}
+
+	return nil, errors.New("invalid database driver")
+}
+
+type MySQLDriver struct {
+	DB *sql.DB
+}
+
+func (d *MySQLDriver) Load(path string) (int64, error) {
+	mysql.RegisterLocalFile(path)
+	r, err := d.DB.Exec("LOAD DATA LOCAL INFILE '" + path + "' INTO TABLE locations FIELDS TERMINATED BY \",\" LINES TERMINATED BY \"\\n\" (ip_address,country_code,country,city,latitude,longitude,mystery_value);")
+	if err != nil {
+		return 0, err
+	}
+
+	insertedRows, err := r.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedRows, nil
+}
+
+func (d *MySQLDriver) CreateSchema() error {
+	schema := `  CREATE TABLE IF NOT EXISTS locations (
+    id INT NOT NULL AUTO_INCREMENT,
+    ip_address VARCHAR(255) NOT NULL,
+    country_code VARCHAR(255) NOT NULL,
+    country  VARCHAR(255) NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    mystery_value INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(id)
+)
+CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;`
+
+	_, err := d.DB.Exec(schema)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
