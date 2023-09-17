@@ -51,14 +51,14 @@ func (g *Geo) ImportCSV(path string, concurrency int) (*Result, error) {
 
 	start := time.Now()
 
-	records := make(chan csvData, concurrency)
+	data := make(chan csvData, concurrency)
 	signal := make(chan bool)
 	importer := csvImporter{
 		path:        path,
 		concurrency: concurrency,
 		driver:      g.driver,
 		db:          g.db,
-		data:        records,
+		data:        data,
 		signal:      signal,
 	}
 
