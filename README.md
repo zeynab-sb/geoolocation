@@ -1,3 +1,4 @@
+
 # geolocation
 
 This library providing interface to import csv file and repository to access to model layer.
@@ -17,7 +18,71 @@ In this library, the data is being read row by row from CSV, and we sanitize eac
 
 ## Examples
 
-ImportCSV Example
+Accepted CSV header and data
+
+``` csv
+ip_address,country_code,country,city,latitude,longitude,mystery_value
+200.106.141.15,SI,Nepal,DuBuquemouth,-84.87503094689836,7.206435933364332,7823011346
+```
+
+We import CSV data in the model below. If you already have the locations schema in your database, it is excellent, and if you haven't, you can easily make schema by this library.
+
+```golang
+type Location struct {
+	ID           uint      `db:"id"`
+	IPAddress    string    `db:"ip_address"`
+	CountryCode  string    `db:"country_code"`
+	Country      string    `db:"country"`
+	City         string    `db:"city"`
+	Lat          float64   `db:"latitude"`
+	Lng          float64   `db:"longitude"`
+	MysteryValue int       `db:"mystery_value"`
+	UpdatedAt    time.Time `db:"updated_at"`
+	CreatedAt    time.Time `db:"created_at"`
+}
+```
+
+Building Schema
+
+``` golang
+package main
+
+import (
+	"fmt"
+	"github.com/zeynab-sb/geoolocation"
+)
+
+func main() {
+    // the config of the database should be send
+	d := &database.DBConfig{
+		Driver:      "mysql",
+		Host:        "127.0.0.1",
+		Port:        3306,
+		DB:          "database",
+		User:        "user",
+		Password:    "password",
+		Location:    nil,
+		MaxConn:     0,
+		IdleConn:    0,
+		Timeout:     0,
+		DialRetry:   0,
+		DialTimeout: 0,
+	}
+
+	geo, err := geoolocation.New(d)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err := geo.CreateSchema()
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+```
+
+ImportCSV
 
 ``` golang
 package main
@@ -63,7 +128,7 @@ func main() {
 
 ```
 
-Using Repository Example
+Using Repository
 
 ``` golang
 package main
