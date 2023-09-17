@@ -154,7 +154,7 @@ type MySQLDriver struct {
 
 func (d *MySQLDriver) Load(path string) (int64, error) {
 	mysql.RegisterLocalFile(path)
-	r, err := d.DB.Exec("LOAD DATA LOCAL INFILE '" + path + "' INTO TABLE locations FIELDS TERMINATED BY \",\" LINES TERMINATED BY \"\\n\" (ip_address,country_code,country,city,latitude,longitude,mystery_value);")
+	r, err := d.DB.Exec("LOAD DATA LOCAL INFILE '" + path + "' IGNORE INTO TABLE locations FIELDS TERMINATED BY \",\" LINES TERMINATED BY \"\\n\" (ip_address,country_code,country,city,latitude,longitude,mystery_value);")
 	if err != nil {
 		return 0, err
 	}
@@ -179,6 +179,7 @@ func (d *MySQLDriver) CreateSchema() error {
     mystery_value INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uc_location UNIQUE (ip_address,country_code,country,city,latitude,longitude,mystery_value),
     PRIMARY KEY(id)
 )
 CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;`

@@ -96,7 +96,7 @@ func (i *csvImporter) setUpSanitizer() error {
 }
 
 // read gets each row of CSV and sends it to the data channel. If any issue happens here, it closes
-//the data channel, and the go routines in sanitizer will close.
+// the data channel, and the go routines in sanitizer will close.
 func (i *csvImporter) read() (int64, error) {
 	defer close(i.data)
 
