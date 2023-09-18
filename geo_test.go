@@ -87,7 +87,7 @@ func (suite *GeoTestSuite) TestGeo_ImportCSV_read_Failure() {
 	err = deleteCSV("data9.csv")
 	require.NoError(err)
 
-	err = deleteCSV("data9_sanitized.csv")
+	err = deleteCSV("../data9_sanitized.csv")
 	require.NoError(err)
 }
 
@@ -103,7 +103,7 @@ func (suite *GeoTestSuite) TestGeo_ImportCSV_load_Failure() {
 	require.NoError(err)
 
 	// load will return error by database
-	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE 'data10_sanitized.csv' INTO TABLE locations (.+)").
+	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE '../data10_sanitized.csv' IGNORE INTO TABLE locations (.+)").
 		WillReturnError(errors.New("database error"))
 
 	_, err = suite.geo.ImportCSV("data10.csv", 1)
@@ -112,7 +112,7 @@ func (suite *GeoTestSuite) TestGeo_ImportCSV_load_Failure() {
 	err = deleteCSV("data10.csv")
 	require.NoError(err)
 
-	err = deleteCSV("data10_sanitized.csv")
+	err = deleteCSV("../data10_sanitized.csv")
 	require.NoError(err)
 }
 
@@ -129,7 +129,7 @@ func (suite *GeoTestSuite) TestGeo_ImportCSV_Success() {
 		"data11.csv")
 	require.NoError(err)
 
-	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE 'data11_sanitized.csv' INTO TABLE locations (.+)").
+	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE '../data11_sanitized.csv' IGNORE INTO TABLE locations (.+)").
 		WillReturnResult(sqlmock.NewResult(2, 2))
 
 	result, err := suite.geo.ImportCSV("data11.csv", 1)

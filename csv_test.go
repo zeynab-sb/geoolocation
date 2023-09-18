@@ -127,14 +127,14 @@ func (suite *CSVTestSuite) TestCSV_setUpSanitizer_Success() {
 	<-importer.signal
 	require.NoError(err)
 
-	file, err := os.Open("data_sanitized.csv")
+	file, err := os.Open("../data_sanitized.csv")
 	require.NoError(err)
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	require.NoError(err)
 
-	err = os.Remove("data_sanitized.csv")
+	err = os.Remove("../data_sanitized.csv")
 	require.NoError(err)
 
 	require.Equal(1, len(records))
@@ -306,13 +306,13 @@ func (suite *CSVTestSuite) TestCSV_load_MySQL_DatabaseErr_Failure() {
 	err := createCSV([][]string{
 		{"127.0.0.1", "TA", "test", "test", "48.92021642445653", "14.900399560492929", "2147483647"},
 		{"127.0.0.2", "TB", "test", "test", "48.92021642545653", "14.900399560892929", "2147493647"},
-	}, "data5.csv")
+	}, "../data5.csv")
 	require.NoError(err)
 
-	i := suite.newImporter("data5.csv", 1)
-	i.sanitizedPath = "data5.csv"
+	i := suite.newImporter("../data5.csv", 1)
+	i.sanitizedPath = "../data5.csv"
 
-	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE 'data5.csv' INTO TABLE locations (.+)").
+	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE '../data5.csv' IGNORE INTO TABLE locations (.+)").
 		WillReturnError(errors.New("database error"))
 
 	go func() {
@@ -322,7 +322,7 @@ func (suite *CSVTestSuite) TestCSV_load_MySQL_DatabaseErr_Failure() {
 	_, err = i.load()
 	require.EqualError(err, expectedError)
 
-	err = deleteCSV("data5.csv")
+	err = deleteCSV("../data5.csv")
 	require.NoError(err)
 }
 
@@ -333,13 +333,13 @@ func (suite *CSVTestSuite) TestCSV_load_MySQL_Success() {
 	err := createCSV([][]string{
 		{"127.0.0.1", "TA", "test", "test", "48.92021642445653", "14.900399560492929", "2147483647"},
 		{"127.0.0.2", "TB", "test", "test", "48.92021642545653", "14.900399560892929", "2147493647"},
-	}, "data6.csv")
+	}, "../data6.csv")
 	require.NoError(err)
 
 	i := suite.newImporter("data6.csv", 1)
-	i.sanitizedPath = "data6.csv"
+	i.sanitizedPath = "../data6.csv"
 
-	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE 'data6.csv' INTO TABLE locations (.+)").
+	suite.sqlMock.ExpectExec("LOAD DATA LOCAL INFILE '../data6.csv' IGNORE INTO TABLE locations (.+)").
 		WillReturnResult(sqlmock.NewResult(2, 2))
 
 	go func() {
@@ -350,7 +350,7 @@ func (suite *CSVTestSuite) TestCSV_load_MySQL_Success() {
 	require.NoError(err)
 	require.Equal(expectedRows, inserted)
 
-	err = deleteCSV("data6.csv")
+	err = deleteCSV("../data6.csv")
 	require.NoError(err)
 }
 

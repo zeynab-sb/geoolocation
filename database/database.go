@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"net/url"
 	"time"
 
@@ -106,6 +107,10 @@ func newPostgresSQLConnection(
 	db.SetMaxIdleConns(maxIdleConn)
 	db.SetConnMaxLifetime(timeout)
 
+	if retryTimeout == 0 {
+		retryTimeout = time.Second
+	}
+
 	counter = 0
 	for {
 		<-time.NewTicker(retryTimeout).C
@@ -143,6 +148,8 @@ func New(driver string, db *sql.DB) (Driver, error) {
 	switch driver {
 	case "mysql":
 		return &MySQLDriver{DB: db}, nil
+	case "postgres":
+		return &PostgresDriver{DB: db}, nil
 	}
 
 	return nil, errors.New("invalid database driver")
@@ -183,6 +190,47 @@ func (d *MySQLDriver) CreateSchema() error {
     PRIMARY KEY(id)
 )
 CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;`
+
+	_, err := d.DB.Exec(schema)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type PostgresDriver struct {
+	DB *sql.DB
+}
+
+// Load TODO: fix copy query
+func (d *PostgresDriver) Load(path string) (int64, error) {
+	r, err := d.DB.Exec("COPY locations(ip_address,country_code,country,city,latitude,longitude,mystery_value) FROM '" + path + "' DELIMITER ',' ;")
+	if err != nil {
+		return 0, err
+	}
+
+	insertedRows, err := r.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedRows, nil
+}
+
+func (d *PostgresDriver) CreateSchema() error {
+	schema := `  CREATE TABLE IF NOT EXISTS locations (
+    id SERIAL PRIMARY KEY,
+    ip_address VARCHAR(255) NOT NULL,
+    country_code VARCHAR(255) NOT NULL,
+    country  VARCHAR(255) NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    latitude DOUBLE precision NOT NULL,
+    longitude DOUBLE precision NOT NULL,
+    mystery_value INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uc_location UNIQUE (ip_address,country_code,country,city,latitude,longitude,mystery_value))`
 
 	_, err := d.DB.Exec(schema)
 	if err != nil {

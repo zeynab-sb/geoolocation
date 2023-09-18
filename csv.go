@@ -53,7 +53,7 @@ func init() {
 // sanitize each row, and then write it to the file async. At the end of this process it sends signal
 // for loading.
 func (i *csvImporter) setUpSanitizer() error {
-	i.sanitizedPath = fmt.Sprintf("%s_sanitized.csv", strings.TrimSuffix(filepath.Base(i.path), ".csv"))
+	i.sanitizedPath = fmt.Sprintf("../%s_sanitized.csv", strings.TrimSuffix(filepath.Base(i.path), ".csv"))
 	sanitizedFile, err := os.Create(i.sanitizedPath)
 	if err != nil {
 		return err
